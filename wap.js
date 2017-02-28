@@ -43,13 +43,13 @@ createCellCont = function(){
 
 	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
 	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
-	var re_params =re_param+"[,"+re_param+"]*";
+	var re_params =re_param+"(,"+re_param+")*";
 	var re_tail = "\\)$";
 	var re = re_head+re_params+re_tail;
-	console.log(re);
-	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))[,((\$[0-9]+:[0-9]+)|([0-9]+))]*\)$
-	//cc.formula_re = new RegExp(re,"m")
-	//console.log(cc.formula_re.test("=AVG(099,1)"))
+	//console.log(re)
+	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))(,((\$[0-9]+:[0-9]+)|([0-9]+)))*\)$
+	cc.formula_re = new RegExp(re,"m")
+	console.log(cc.formula_re.test("=AVG(0-9)"))
 
 	cc.elem = document.createElement("div");
 	cc.elem.appendChild(cc.c_text)
