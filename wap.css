@@ -55,9 +55,14 @@ table, th, td {
 }
 
 .wapCalc {
-	padding:30px;
+	padding:20px;
+	margin: 10px;
 	border: 1px dotted black;
 	float:right;
+}
+
+.currWc {
+	background-color: red;
 }
 
 .wapRow {

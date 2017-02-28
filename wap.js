@@ -11,10 +11,6 @@ createTableElem = function(row,col){
 			var td = document.createElement("td");
 			td.innerHTML = rand();
 			td.setAttribute("class", "wapCell");
-			td.addEventListener("click", function (e) {
-				var cell = e.target;
-				cell.classList.toggle("selected");
-			});
 			tr.appendChild(td);
 		}
 		t.appendChild(tr);
@@ -57,7 +53,7 @@ createCalcElem = function(){
 const KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
 	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
-		wc.keyDown(e.keyCode);
+		wcCurr.keyDown(e.keyCode);
 		return false;
 	}
 	
@@ -66,13 +62,13 @@ document.onkeydown = function(e){
 
 getWapTable = function(r,c) {
 	return {
-
 		r_cnt: r,
 		c_cnt: c,
 		elem: createTableElem(r,c),
 
 		r_curr: 0,
 		c_curr: 0,
+
 		keyDown: function(keyCode){
 			var newRow=this.r_curr, newCol=this.c_curr;
 
@@ -139,6 +135,16 @@ getWapCalc = function(r,c){
 		return false;
 	};
 
+	wc.elem.addEventListener("click", function (e) {
+		setCurrentWc(wc);
+		e = e || window.event;
+		var target = e.target || e.srcElement;
+		if(target.classList.contains("wapCell")){
+			var cell = target;
+			cell.classList.toggle("selected");
+		}
+	});
+
 	wc.cc.c_text.addEventListener("input",function (e) {
 		wc.t.setCurrentCellText(wc.cc.getInputText());
 	});
@@ -151,9 +157,29 @@ getWapCalc = function(r,c){
 	return wc;
 }
 
+setCurrentWc = function(tgt_wc){
+	if(wcCurr!=null){
+		console.log("unset");
+		wcCurr.elem.classList.remove("currWc");
+	}
+	wcCurr = tgt_wc;
+	tgt_wc.elem.classList.add("currWc");
+}
+
+getCurrentWc = function(){
+	return wcCurr;
+}
+
+var wcAll = [];
+var wcCurr = null;
+
 document.addEventListener('DOMContentLoaded', function () {
 	var container = document.getElementById("container");
 	var wc = getWapCalc(5,3);
 	wc.init();
 	container.appendChild(wc.elem);
+	wc = getWapCalc(5,3);
+	wc.init();
+	container.appendChild(wc.elem);
+	setCurrentWc(wc);
 });
