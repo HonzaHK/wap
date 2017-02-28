@@ -1,9 +1,21 @@
 rand = function(){
 	return Math.floor(Math.random() * 10) + 1 ; 
 }
+
+function genId(){
+	var length = 5;
+    var text = "";
+    var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+    for( var i=0; i < length; i++ )
+        text += possible.charAt(Math.floor(Math.random() * possible.length));
+
+    return text;
+}
+
 createTableElem = function(row,col){
 	var t = document.createElement("table");
-	t.setAttribute("id", "wapTable");
+	t.setAttribute("class", "wapTable");
 	for(var r=0;r<row;r++){
 		var tr = document.createElement("tr");
 		tr.setAttribute("class", "wapRow")
@@ -11,6 +23,8 @@ createTableElem = function(row,col){
 			var td = document.createElement("td");
 			td.innerHTML = rand();
 			td.setAttribute("class", "wapCell");
+			td.setAttribute("data-row", ""+r);
+			td.setAttribute("data-col", ""+c);
 			tr.appendChild(td);
 		}
 		t.appendChild(tr);
@@ -27,8 +41,15 @@ createCellCont = function(){
 	cc.c_text.setAttribute("type","text");
 	cc.c_text.classList.add("ccInput");
 
-	cc.formula_re = /^=(ADD|MUL|SUB|DIV|AVG)\(\${0,1}[0-9]+[\${0,1}[0-9]+]*\)$/m
-	console.log(cc.formula_re.test("=AVG(099)"))
+	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
+	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
+	var re_params =re_param+"[,"+re_param+"]*";
+	var re_tail = "\\)$";
+	var re = re_head+re_params+re_tail;
+	console.log(re);
+	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))[,((\$[0-9]+:[0-9]+)|([0-9]+))]*\)$
+	//cc.formula_re = new RegExp(re,"m")
+	//console.log(cc.formula_re.test("=AVG(099,1)"))
 
 	cc.elem = document.createElement("div");
 	cc.elem.appendChild(cc.c_text)
@@ -44,16 +65,17 @@ createCellCont = function(){
 	return cc;
 }
 
-createCalcElem = function(){
+createCalcElem = function(id){
 	var c = document.createElement("div");
 	c.classList.add("wapCalc");
+	c.setAttribute("id","wcalc_"+id);
 	return c;
 }
 
 const KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
 	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
-		wcCurr.keyDown(e.keyCode);
+		activePageElem.keyDown(e.keyCode);
 		return false;
 	}
 	
@@ -117,8 +139,9 @@ getWapTable = function(r,c) {
 }
 
 getWapCalc = function(r,c){
-	wc = {}
-	wc.elem = createCalcElem();
+	var wc = {}
+	wc.e_id = genId();
+	wc.elem = createCalcElem(wc.e_id);
 	
 	wc.t = getWapTable(r,c);
 
@@ -135,13 +158,18 @@ getWapCalc = function(r,c){
 		return false;
 	};
 
+	
 	wc.elem.addEventListener("click", function (e) {
-		setCurrentWc(wc);
+		setActivePageElem(wc);
 		e = e || window.event;
 		var target = e.target || e.srcElement;
 		if(target.classList.contains("wapCell")){
 			var cell = target;
 			cell.classList.toggle("selected");
+			var r=cell.getAttribute("data-row");
+			var c=cell.getAttribute("data-col");
+			wc.t.setCurrentCell(r,c);
+			wc.cc.setInputText(wc.t.getCurrentCellText());
 		}
 	});
 
@@ -157,29 +185,30 @@ getWapCalc = function(r,c){
 	return wc;
 }
 
-setCurrentWc = function(tgt_wc){
-	if(wcCurr!=null){
-		console.log("unset");
-		wcCurr.elem.classList.remove("currWc");
+setActivePageElem = function(tgt_wc){
+	unsetActivePageElem();
+	activePageElem = tgt_wc;
+	tgt_wc.elem.classList.add("activeWc");
+}
+
+unsetActivePageElem = function(){
+	if(activePageElem!=null){
+		activePageElem.elem.classList.remove("activeWc");
 	}
-	wcCurr = tgt_wc;
-	tgt_wc.elem.classList.add("currWc");
 }
 
-getCurrentWc = function(){
-	return wcCurr;
+getActivePageElem = function(){
+	return activePageElem;
 }
-
-var wcAll = [];
-var wcCurr = null;
+var activePageElem = null;
 
 document.addEventListener('DOMContentLoaded', function () {
 	var container = document.getElementById("container");
-	var wc = getWapCalc(5,3);
+	let wc = getWapCalc(5,3);
 	wc.init();
 	container.appendChild(wc.elem);
 	wc = getWapCalc(5,3);
 	wc.init();
 	container.appendChild(wc.elem);
-	setCurrentWc(wc);
+	setActivePageElem(wc);
 });
