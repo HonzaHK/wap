@@ -46,6 +46,7 @@ createCellCont = function(){
 	var re_params =re_param+"(,"+re_param+")*";
 	var re_tail = "\\)$";
 	var re = re_head+re_params+re_tail;
+	//test
 	//console.log(re)
 	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))(,((\$[0-9]+:[0-9]+)|([0-9]+)))*\)$
 	cc.formula_re = new RegExp(re,"m")
