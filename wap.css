@@ -51,7 +51,13 @@ table, th, td {
 }
 
 #wapTable {
+	float:right;
+}
 
+.wapCalc {
+	padding:30px;
+	border: 1px dotted black;
+	float:right;
 }
 
 .wapRow {
@@ -69,3 +75,13 @@ table, th, td {
 .currentCell {
 	border: 3px solid purple;
 }
+
+.ccInput {
+	margin-bottom: 10px;
+	height: 30px;
+	width: 60%;
+	float:right;
+	border: 1px solid black;
+	padding-left: 10px;
+}
+
