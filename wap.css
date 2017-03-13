@@ -66,6 +66,12 @@ table, th, td {
 	background-color: #e6e6ff
 }
 
+.wapRowHeader, .wapColHeader {
+	text-align:center; 
+	vertical-align:middle;
+	
+}
+
 .wapRow {
 	height: 50px;
 }

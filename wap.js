@@ -38,7 +38,7 @@ createTableElem = function(row,col){
 		tr.setAttribute("class", "wapRow");
 		var trh = document.createElement("th"); //row headers
 		trh.innerHTML = r;
-		tdh.setAttribute("class", "wapRowHeader");
+		trh.setAttribute("class", "wapRowHeader");
 		tr.appendChild(trh);
 		for(var c=0;c<col;c++){
 			var td = document.createElement("td");
@@ -93,9 +93,20 @@ createCalcElem = function(id){
 	return c;
 }
 
-const KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
+const KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
 	if (activePageElem==null){ return true;} //not a keydown for our calc
+
+	if (activePageElem.cc.c_text==document.activeElement) { 
+		if(e.keyCode==KEYc_ESC || e.keyCode==KEYc_ENTER){
+			activePageElem.cc.c_text.blur();
+		}
+		return true;
+	}
+
+	if(e.keyCode==KEYc_SPACE){
+		activePageElem.t.getCurrentCell().classList.toggle("selected");
+	}
 
 	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
 		activePageElem.keyDown(e.keyCode);
