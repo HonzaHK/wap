@@ -13,12 +13,33 @@ function genId(){
     return text;
 }
 
+function colHeaders(){
+	var idx = 64
+	var headers = []
+	for(var i=0;i<24;i++){
+		headers.push(String.fromCharCode(idx+i));
+	}
+	return headers
+}
+
 createTableElem = function(row,col){
 	var t = document.createElement("table");
 	t.setAttribute("class", "wapTable");
+	var tr = document.createElement("tr"); //table row for headers
+	for (var c=0;c<col+1;c++){ //col headers
+		var tdh = document.createElement("th");
+		tdh.innerHTML = colHeaders()[c];
+		tdh.setAttribute("class", "wapColHeader");
+		tr.appendChild(tdh);
+	}
+	t.appendChild(tr)
 	for(var r=0;r<row;r++){
-		var tr = document.createElement("tr");
-		tr.setAttribute("class", "wapRow")
+		tr = document.createElement("tr");
+		tr.setAttribute("class", "wapRow");
+		var trh = document.createElement("th"); //row headers
+		trh.innerHTML = r;
+		tdh.setAttribute("class", "wapRowHeader");
+		tr.appendChild(trh);
 		for(var c=0;c<col;c++){
 			var td = document.createElement("td");
 			td.innerHTML = rand();
@@ -74,6 +95,8 @@ createCalcElem = function(id){
 
 const KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
+	if (activePageElem==null){ return true;} //not a keydown for our calc
+
 	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
 		activePageElem.keyDown(e.keyCode);
 		return false;
@@ -114,7 +137,7 @@ getWapTable = function(r,c) {
 			return true;
 		},
 		getCell: function(r,c){
-			return this.elem.rows[r].cells[c];
+			return this.elem.rows[r+1].cells[c+1];
 		},
 		getCurrentCell: function(){
 			return this.getCell(this.r_curr,this.c_curr);
@@ -146,6 +169,7 @@ getWapCalc = function(r,c){
 	wc.t = getWapTable(r,c);
 
 	wc.cc = createCellCont();
+
 	wc.elem.appendChild(wc.cc.elem);
 	wc.elem.appendChild(wc.t.elem);
 
@@ -166,8 +190,8 @@ getWapCalc = function(r,c){
 		if(target.classList.contains("wapCell")){
 			var cell = target;
 			cell.classList.toggle("selected");
-			var r=cell.getAttribute("data-row");
-			var c=cell.getAttribute("data-col");
+			var r=parseInt(cell.getAttribute("data-row"));
+			var c=parseInt(cell.getAttribute("data-col"));
 			wc.t.setCurrentCell(r,c);
 			wc.cc.setInputText(wc.t.getCurrentCellText());
 		}
@@ -207,8 +231,5 @@ document.addEventListener('DOMContentLoaded', function () {
 	let wc = getWapCalc(5,3);
 	wc.init();
 	container.appendChild(wc.elem);
-	wc = getWapCalc(5,3);
-	wc.init();
-	container.appendChild(wc.elem);
-	setActivePageElem(wc);
+	setActivePageElem(wc)
 });

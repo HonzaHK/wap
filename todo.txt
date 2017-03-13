@@ -3,4 +3,5 @@ formula regex (how sofisticated AND how can be SUM written)
 formula computation (computing cell before dependent cell is computed)
 area selection (drag,click etc)
 component api (tgt_div, nrow, ncol)
-table headers (row/col signature)
+
+event order (doc.onClick vs table.onClick etc)
