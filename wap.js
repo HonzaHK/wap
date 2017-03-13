@@ -22,6 +22,44 @@ function colHeaders(){
 	return headers
 }
 
+createCellCont = function(){
+
+	var cc = {};
+
+	cc.c_text = document.createElement("input");
+	cc.c_text.setAttribute("type","text");
+	cc.c_text.classList.add("ccInput");
+
+	cc.del_btn = document.createElement("input");
+	cc.del_btn.setAttribute("type","button");
+	cc.del_btn.setAttribute("value","DEL");
+
+	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
+	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
+	var re_params =re_param+"(,"+re_param+")*";
+	var re_tail = "\\)$";
+	var re = re_head+re_params+re_tail;
+	//console.log(re)
+	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))(,((\$[0-9]+:[0-9]+)|([0-9]+)))*\)$
+	cc.formula_re = new RegExp(re,"m")
+	console.log(cc.formula_re.test("=AVG(0-9)"))
+
+	cc.elem = document.createElement("div");
+	cc.elem.appendChild(cc.del_btn);
+	cc.elem.appendChild(cc.c_text);
+
+	cc.getInputText = function(){
+		return cc.c_text.value;
+	}
+	cc.setInputText = function(text){
+		cc.c_text.value = text;
+	}
+
+
+	return cc;
+}
+
+
 createTableElem = function(row,col){
 	var t = document.createElement("table");
 	t.setAttribute("class", "wapTable");
@@ -54,69 +92,7 @@ createTableElem = function(row,col){
 	return t;
 }
 
-createCellCont = function(){
-
-	var cc = {};
-
-	cc.c_text = document.createElement("input");
-	cc.c_text.setAttribute("type","text");
-	cc.c_text.classList.add("ccInput");
-
-	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
-	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
-	var re_params =re_param+"(,"+re_param+")*";
-	var re_tail = "\\)$";
-	var re = re_head+re_params+re_tail;
-	//console.log(re)
-	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))(,((\$[0-9]+:[0-9]+)|([0-9]+)))*\)$
-	cc.formula_re = new RegExp(re,"m")
-	console.log(cc.formula_re.test("=AVG(0-9)"))
-
-	cc.elem = document.createElement("div");
-	cc.elem.appendChild(cc.c_text)
-
-	cc.getInputText = function(){
-		return cc.c_text.value;
-	}
-	cc.setInputText = function(text){
-		cc.c_text.value = text;
-	}
-
-
-	return cc;
-}
-
-createCalcElem = function(id){
-	var c = document.createElement("div");
-	c.classList.add("wapCalc");
-	c.setAttribute("id","wcalc_"+id);
-	return c;
-}
-
-const KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
-document.onkeydown = function(e){
-	if (activePageElem==null){ return true;} //not a keydown for our calc
-
-	if (activePageElem.cc.c_text==document.activeElement) { 
-		if(e.keyCode==KEYc_ESC || e.keyCode==KEYc_ENTER){
-			activePageElem.cc.c_text.blur();
-		}
-		return true;
-	}
-
-	if(e.keyCode==KEYc_SPACE){
-		activePageElem.t.getCurrentCell().classList.toggle("selected");
-	}
-
-	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
-		activePageElem.keyDown(e.keyCode);
-		return false;
-	}
-	
-	return true;
-};
-
-getWapTable = function(r,c) {
+initWapTable = function(r,c) {
 	return {
 		r_cnt: r,
 		c_cnt: c,
@@ -168,16 +144,38 @@ getWapTable = function(r,c) {
 		setCurrentCellText: function(text){
 			var curr_cell = this.getCurrentCell();
 			curr_cell.innerHTML = text;
+		},
+		setCellText: function(r,c,text){
+			var cell = this.getCell(r,c);
+			cell.innerHTML = text;
+		},
+		delSelection: function(){
+			for(var r=0;r<this.r_cnt;r++){
+				for(var c=0;c<this.c_cnt;c++){
+					var cell = this.getCell(r,c);
+					if(cell.classList.contains("selected")){
+						cell.classList.remove("selected");
+						this.setCellText(r,c,"");
+					}
+				}
+			}
 		}
 	}
 }
 
-getWapCalc = function(r,c){
+createCalcElem = function(id){
+	var c = document.createElement("div");
+	c.classList.add("wapCalc");
+	c.setAttribute("id","wcalc_"+id);
+	return c;
+}
+
+initWapCalc = function(r,c){
 	var wc = {}
 	wc.e_id = genId();
 	wc.elem = createCalcElem(wc.e_id);
 	
-	wc.t = getWapTable(r,c);
+	wc.t = initWapTable(r,c);
 
 	wc.cc = createCellCont();
 
@@ -193,19 +191,38 @@ getWapCalc = function(r,c){
 		return false;
 	};
 
-	
 	wc.elem.addEventListener("click", function (e) {
 		setActivePageElem(wc);
 		e = e || window.event;
 		var target = e.target || e.srcElement;
 		if(target.classList.contains("wapCell")){
 			var cell = target;
-			cell.classList.toggle("selected");
-			var r=parseInt(cell.getAttribute("data-row"));
-			var c=parseInt(cell.getAttribute("data-col"));
-			wc.t.setCurrentCell(r,c);
-			wc.cc.setInputText(wc.t.getCurrentCellText());
+			wc.cellClick(cell);
 		}
+		return true;
+	});
+
+	wc.elem.addEventListener("dblclick", function (e) {
+		setActivePageElem(wc);
+		e = e || window.event;
+		var target = e.target || e.srcElement;
+		if(target.classList.contains("wapCell")){
+			var cell = target;
+			wc.cellClick(cell);
+			wc.cc.c_text.focus();
+		}
+		return true;
+	});
+
+	wc.cellClick= function(cellElem){
+		var r=parseInt(cellElem.getAttribute("data-row"));
+		var c=parseInt(cellElem.getAttribute("data-col"));
+		wc.t.setCurrentCell(r,c);
+		wc.cc.setInputText(wc.t.getCurrentCellText());
+	}
+
+	wc.cc.del_btn.addEventListener("click",function(e) {
+		wc.t.delSelection();
 	});
 
 	wc.cc.c_text.addEventListener("input",function (e) {
@@ -219,6 +236,36 @@ getWapCalc = function(r,c){
 
 	return wc;
 }
+
+// GLOBAL (document) HANDELRS ***************************
+const KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
+document.onkeydown = function(e){
+	if (activePageElem==null){ return true;} //not a keydown for our calc
+
+	if (activePageElem.cc.c_text==document.activeElement) { 
+		if(e.keyCode==KEYc_ESC || e.keyCode==KEYc_ENTER){
+			activePageElem.cc.c_text.blur();
+		}
+		return true;
+	}
+
+	if(e.keyCode==KEYc_SPACE){
+		activePageElem.t.getCurrentCell().classList.toggle("selected");
+	}
+
+	if(e.keyCode==KEYc_ENTER){
+		activePageElem.cc.c_text.focus();
+	}
+
+	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
+		activePageElem.keyDown(e.keyCode);
+		return false;
+	}
+	
+	return true;
+};
+// ******************************************************
+
 
 setActivePageElem = function(tgt_wc){
 	unsetActivePageElem();
@@ -235,11 +282,12 @@ unsetActivePageElem = function(){
 getActivePageElem = function(){
 	return activePageElem;
 }
+
 var activePageElem = null;
 
 document.addEventListener('DOMContentLoaded', function () {
 	var container = document.getElementById("container");
-	let wc = getWapCalc(5,3);
+	let wc = initWapCalc(5,3);
 	wc.init();
 	container.appendChild(wc.elem);
 	setActivePageElem(wc)
