@@ -33,6 +33,7 @@ createCellCont = function(){
 	cc.del_btn = document.createElement("input");
 	cc.del_btn.setAttribute("type","button");
 	cc.del_btn.setAttribute("value","DEL");
+	cc.del_btn.classList.add("delBtn");
 
 	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
 	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
@@ -150,6 +151,7 @@ initWapTable = function(r,c) {
 			cell.innerHTML = text;
 		},
 		delSelection: function(){
+			var curr_cell = this.getCurrentCell();
 			for(var r=0;r<this.r_cnt;r++){
 				for(var c=0;c<this.c_cnt;c++){
 					var cell = this.getCell(r,c);
@@ -222,7 +224,11 @@ initWapCalc = function(r,c){
 	}
 
 	wc.cc.del_btn.addEventListener("click",function(e) {
+		if(wc.t.getCurrentCell().classList.contains("selected") && wc.t.getCurrentCell().classList.contains("currentCell")){
+			wc.cc.setInputText("");
+		}
 		wc.t.delSelection();
+		wc.cc.del_btn.blur();
 	});
 
 	wc.cc.c_text.addEventListener("input",function (e) {
@@ -238,7 +244,7 @@ initWapCalc = function(r,c){
 }
 
 // GLOBAL (document) HANDELRS ***************************
-const KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
+const KEYc_D=68,KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
 	if (activePageElem==null){ return true;} //not a keydown for our calc
 
@@ -247,6 +253,10 @@ document.onkeydown = function(e){
 			activePageElem.cc.c_text.blur();
 		}
 		return true;
+	}
+
+	if(e.keyCode==KEYc_D){
+		activePageElem.cc.del_btn.click();
 	}
 
 	if(e.keyCode==KEYc_SPACE){
