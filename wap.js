@@ -14,7 +14,7 @@ function genId(){
 }
 
 function colHeaders(){
-	var idx = 64
+	var idx = 96
 	var headers = []
 	for(var i=0;i<24;i++){
 		headers.push(String.fromCharCode(idx+i));
@@ -34,16 +34,6 @@ createCellCont = function(){
 	cc.del_btn.setAttribute("type","button");
 	cc.del_btn.setAttribute("value","DEL");
 	cc.del_btn.classList.add("delBtn");
-
-	var re_head ="^=(ADD|MUL|SUB|DIV|AVG)\\(";
-	var re_param = "((\\$[0-9]+:[0-9]+)|([0-9]+))"
-	var re_params =re_param+"(,"+re_param+")*";
-	var re_tail = "\\)$";
-	var re = re_head+re_params+re_tail;
-	//console.log(re)
-	//^=(ADD|MUL|SUB|DIV|AVG)\(((\$[0-9]+:[0-9]+)|([0-9]+))(,((\$[0-9]+:[0-9]+)|([0-9]+)))*\)$
-	cc.formula_re = new RegExp(re,"m")
-	console.log(cc.formula_re.test("=AVG(0-9)"))
 
 	cc.elem = document.createElement("div");
 	cc.elem.appendChild(cc.del_btn);
@@ -82,6 +72,9 @@ createTableElem = function(row,col){
 		for(var c=0;c<col;c++){
 			var td = document.createElement("td");
 			td.innerHTML = rand();
+			if(r==0 && c==0){
+				td.innerHTML = "=c3+6+b1"
+			}
 			td.setAttribute("class", "wapCell");
 			td.setAttribute("data-row", ""+r);
 			td.setAttribute("data-col", ""+c);
@@ -161,6 +154,47 @@ initWapTable = function(r,c) {
 					}
 				}
 			}
+		},
+		recomputeTable: function(){
+			for(var r=0;r<this.r_cnt;r++){
+				for(var c=0;c<this.c_cnt;c++){
+					var val = this.getCell(r,c).innerHTML;
+					if(val.charAt(0)=='='){
+						this.evaluateCell(r,c,val);
+					}
+				}
+			}
+		},
+		evaluateCell: function(r,c,val){
+			var re_num = "(-?[0-9]+)";
+			var re_cellPtr = "(([a-j]|[A-J])[0-9])";
+			var re_term ="("+re_num+"|"+re_cellPtr+")";
+			var re_op = re_term+"("+"[\\+\\-\\*\\/]"+re_term+")*";
+			var re = re_op
+			console.log(re_op);
+			formula_regex = new RegExp("^="+re+"$","g")
+			let isValidExpr = formula_regex.test(val);
+			if (!isValidExpr){
+				this.setCellText(r,c,"INVALID EXPR");
+				return;
+			}
+
+			cellPtr_regex = new RegExp(re_cellPtr,"g")
+			var match = null;
+			var deref = val;
+			while((match = cellPtr_regex.exec(val))!=null){
+				let m_idx = match.index;
+				let m_rowDesc = match[0].charAt(1);
+				let m_colDesc = match[0].charAt(0);
+				let m_r = parseInt(m_rowDesc);
+				let m_c = parseInt(m_colDesc.charCodeAt(0)) - 97;
+				let m_cellVal = this.getCell(m_r,m_c).innerHTML;
+				console.log(match[0]);
+				deref = deref.replace(new RegExp(match[0],"g"),m_cellVal);
+				console.log(deref);
+			}
+			deref = deref.substring(1); //remove exp flag "="
+			this.setCellText(r,c,eval(deref));
 		}
 	}
 }
@@ -251,6 +285,7 @@ document.onkeydown = function(e){
 	if (activePageElem.cc.c_text==document.activeElement) { 
 		if(e.keyCode==KEYc_ESC || e.keyCode==KEYc_ENTER){
 			activePageElem.cc.c_text.blur();
+			activePageElem.t.recomputeTable();
 		}
 		return true;
 	}
@@ -301,4 +336,5 @@ document.addEventListener('DOMContentLoaded', function () {
 	wc.init();
 	container.appendChild(wc.elem);
 	setActivePageElem(wc)
+	wc.t.recomputeTable();
 });
