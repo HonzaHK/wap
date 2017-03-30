@@ -1,5 +1,0 @@
-formula regex (how sofisticated AND how can be SUM written)
-formula computation (computing cell before dependent cell is computed)
-component api (tgt_div, nrow, ncol)
-
-event order (doc.onClick vs table.onClick etc)
