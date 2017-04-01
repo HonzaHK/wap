@@ -87,6 +87,7 @@ createTableElem = function(rows){
 	return t;
 }
 
+
 createCellElem = function(cell){
 	var td = document.createElement("td");
 	td.innerHTML = cell.inputText;
@@ -113,6 +114,7 @@ initWapTable = function(r,c) {
 			let cell = {};
 			cell.r = r;
 			cell.c = c;
+			cell.isSelected = false;
 			cell.inputText = ""+rand();
 			if(cell.r==0 && cell.c==0){
 				cell.inputText = "=avg(b0,c0)"
@@ -182,6 +184,11 @@ initWapTable = function(r,c) {
 		t.c_curr = c;
 	};
 
+	t.setCellInput= function(r,c,text){
+		let cell = t.getCell(r,c);
+		cell.inputText = text;
+	};
+
 	t.setCurrentCellInput= function(text){
 		var curr_cell = t.getCurrentCell();
 		curr_cell.inputText = text;
@@ -197,36 +204,61 @@ initWapTable = function(r,c) {
 		curr_cell.elem.innerHTML = text;
 	};
 
+	t.toggleSelection= function(r,c){
+		var cell = t.getCell(r,c);
+		if(cell.isSelected){
+			cell.isSelected = false;
+			cell.elem.classList.remove("selected");
+		}
+		else{
+			cell.isSelected = true;
+			cell.elem.classList.add("selected");
+		}
+	}
 
 	t.delSelection= function(){
 		var curr_cell = t.getCurrentCell();
 		for(var r=0;r<t.r_cnt;r++){
 			for(var c=0;c<t.c_cnt;c++){
 				var cell = t.getCell(r,c);
-				if(cell.elem.classList.contains("selected")){
-					cell.elem.classList.remove("selected");
+				if(cell.isSelected){
+					t.toggleSelection(cell.r,cell.c)
+					t.setCellInput(r,c,"");
 					t.setCellOutput(r,c,"");
 				}
 			}
 		}
+		t.refresh();
 	};
 
-	t.render= function(){
-		for(var r=0;r<t.r_cnt;r++){
-			for(var c=0;c<t.c_cnt;c++){
-				var val = t.getCellInput(r,c);
-				if(val.charAt(0)=='='){
-					t.evaluateCell(r,c,val);
-				}
-				else{
-					t.setCellOutput(r,c,val);
+	t.refresh= function(){
+		let val_old="", val_new="";
+		let isModified=true,i=0;
+		while(isModified){
+			isModified=false;
+			for(var r=0;r<t.r_cnt;r++){
+				for(var c=0;c<t.c_cnt;c++){
+					val_old = t.getCellOutput(r,c);
+					t.evaluateCell(r,c);
+					val_new = t.getCellOutput(r,c);
+					if(val_old!=val_new){
+						isModified=true;
+					}
 				}
 			}
+
+			if(i++>100){break;} //cross-reference guard
 		}
-	};
+	}
 
 	t.evaluateCell= function(r,c,val){
-		var re_num = "(-?[0-9]+)";
+		var val = t.getCellInput(r,c);
+		if(val.charAt(0)!='='){
+			t.setCellOutput(r,c,val);
+			return;
+		}
+
+		var re_num = "(-?[0-9]+(.[0-9]+)?)";
 		var re_cellPtr = "(([a-j]|[A-J])[0-9])";
 		var re_term = "("+re_num+"|"+re_cellPtr+")";
 		var re_sum = "sum\\("+re_term+"(,"+re_term+")*"+"\\)";
@@ -237,7 +269,6 @@ initWapTable = function(r,c) {
 		var re = re_base+"("+"[\\+\\-\\*\\/]"+re_base+")*";
 		
 		var formula_regex = new RegExp("^="+re+"$","g")
-		console.log(val);
 		let isValidExpr = formula_regex.test(val);
 		if (!isValidExpr){
 			t.setCellOutput(r,c,"SYNTAX_ERR");
@@ -259,23 +290,17 @@ initWapTable = function(r,c) {
 			let m_r = parseInt(m_rowDesc);
 			let m_c = parseInt(m_colDesc.charCodeAt(0)) - 97;
 			let m_cellVal = t.getCellOutput(m_r,m_c);
-			console.log(match[0]);
 			deref = deref.replace(new RegExp(match[0],"g"),m_cellVal);
-			console.log(deref);
 		}
 
 		var sum_regex = new RegExp(re_sum,"g");
 		match = null;
 		while((match = sum_regex.exec(deref))!=null){
 			let m_noSumHeader = match[0].substring(3);
-			console.log(m_noSumHeader);
 			let m_AdditionFromSum = m_noSumHeader.replace(new RegExp(",","g"),")+(");
-			console.log(m_AdditionFromSum);
 
-			console.log(">>>>>>>>>>>>>>>>"+"\\("+match[0].substring(4,match[0].length-1)+"\\)");
 			var match_regex = new RegExp("sum\\("+match[0].substring(4,match[0].length-1)+"\\)","g");
 			deref = deref.replace(match_regex,m_AdditionFromSum);
-			console.log(deref);
 		}
 
 		var avg_regex = new RegExp(re_avg,"g");
@@ -285,11 +310,9 @@ initWapTable = function(r,c) {
 			let m_termCnt = (match[0].match(new RegExp(",","g")) || [] ).length+1;
 			let m_AdditionFromSum = m_noSumHeader.replace(new RegExp(",","g"),")+(");
 			m_AdditionFromSum = "("+"("+m_AdditionFromSum+")/"+m_termCnt+")";
-			console.log(m_AdditionFromSum);
 
 			var match_regex = new RegExp("avg\\("+match[0].substring(4,match[0].length-1)+"\\)","g");
 			deref = deref.replace(match_regex,m_AdditionFromSum);
-			console.log(deref);
 		}
 
 		deref = deref.substring(1); //remove exp flag "="
@@ -359,7 +382,7 @@ initWapCalc = function(r,c){
 	}
 
 	wc.cc.del_btn.addEventListener("click",function(e) {
-		if(wc.t.getCurrentCell().classList.contains("selected") && wc.t.getCurrentCell().classList.contains("currentCell")){
+		if(wc.t.getCurrentCell().isSelected){
 			wc.cc.setInputText("");
 		}
 		wc.t.delSelection();
@@ -367,7 +390,7 @@ initWapCalc = function(r,c){
 	});
 
 	wc.cc.c_text.addEventListener("input",function (e) {
-		//wc.t.setCurrentCellOutput(wc.cc.getInputText());
+		wc.t.setCurrentCellOutput(wc.cc.getInputText());
 	});
 
 	wc.init= function(){
@@ -392,10 +415,13 @@ document.onkeydown = function(e){
 		}
 		else if(e.keyCode==KEYc_ENTER){
 			activePageElem.cc.c_text.blur();
+			let curr_cell = activePageElem.t.getCurrentCell();
 			let newInput = activePageElem.cc.getInputText();
 			//if (!(newInput == activePageElem.t.getCurrentCellInput())) {
 				activePageElem.t.setCurrentCellInput(newInput);
-				activePageElem.t.render();
+				activePageElem.t.evaluateCell(curr_cell.r,curr_cell.c);
+				//activePageElem.t.setCurrentCellOutput(newInput);
+				activePageElem.t.refresh();
 			//}
 		}
 		return true;
@@ -406,7 +432,8 @@ document.onkeydown = function(e){
 	}
 
 	if(e.keyCode==KEYc_SPACE){
-		activePageElem.t.getCurrentCell().classList.toggle("selected");
+		let curr_cell = activePageElem.t.getCurrentCell();
+		activePageElem.t.toggleSelection(curr_cell.r,curr_cell.c);
 		return false;
 	}
 
@@ -448,6 +475,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	let wc = initWapCalc(5,3);
 	container.appendChild(wc.elem);
 	setActivePageElem(wc)
-	wc.t.render();
+	wc.t.refresh();
 });
 // ******************************************************
