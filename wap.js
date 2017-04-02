@@ -1,7 +1,6 @@
 //VUTBR FIT WAP - Tabulkovy kalkulator
 //Author: Jan Kubis/xkubis13
-
-rand = function(){
+function rand(){
 	return Math.floor(Math.random() * 10) + 1 ; 
 }
 
@@ -10,72 +9,62 @@ function genId(){
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-    for( var i=0; i < length; i++ )
+    for( var i=0; i < length; i++ ){
         text += possible.charAt(Math.floor(Math.random() * possible.length));
-
+    }
     return text;
 }
 
-function colHeaders(){
-	var idx = 96
-	var headers = []
-	for(var i=0;i<24;i++){
-		headers.push(String.fromCharCode(idx+i));
+createCellInputElem = function(){
+
+	var ci = {};
+
+	ci.c_text = document.createElement("input");
+	ci.c_text.setAttribute("type","text");
+	ci.c_text.classList.add("ciInput");
+
+	ci.del_btn = document.createElement("input");
+	ci.del_btn.setAttribute("type","button");
+	ci.del_btn.setAttribute("value","DEL");
+	ci.del_btn.classList.add("delBtn");
+
+	ci.elem = document.createElement("div");
+	ci.elem.appendChild(ci.del_btn);
+	ci.elem.appendChild(ci.c_text);
+
+	ci.getInputText = function(){
+		return ci.c_text.value;
 	}
-	return headers
-}
-
-createCellCont = function(){
-
-	var cc = {};
-
-	cc.c_text = document.createElement("input");
-	cc.c_text.setAttribute("type","text");
-	cc.c_text.classList.add("ccInput");
-
-	cc.del_btn = document.createElement("input");
-	cc.del_btn.setAttribute("type","button");
-	cc.del_btn.setAttribute("value","DEL");
-	cc.del_btn.classList.add("delBtn");
-
-	cc.elem = document.createElement("div");
-	cc.elem.appendChild(cc.del_btn);
-	cc.elem.appendChild(cc.c_text);
-
-	cc.getInputText = function(){
-		return cc.c_text.value;
-	}
-	cc.setInputText = function(text){
-		cc.c_text.value = text;
+	ci.setInputText = function(text){
+		ci.c_text.value = text;
 	}
 
-
-	return cc;
+	return ci;
 }
 
 
 createTableElem = function(rows){
-	var row = rows.length;
-	var col = rows[0].cells.length;
+	var r_cnt = rows.length;
+	var c_cnt = rows[0].cells.length;
 	
 	var t = document.createElement("table");
 	t.setAttribute("class", "wapTable");
 	var tr = document.createElement("tr"); //table row for headers
-	for (var c=0;c<col+1;c++){ //col headers
+	for (var c=0;c<c_cnt+1;c++){ //col headers
 		var tdh = document.createElement("th");
-		tdh.innerHTML = colHeaders()[c];
+		tdh.innerHTML = String.fromCharCode(c+96); //ASCII 'a' offset
 		tdh.setAttribute("class", "wapColHeader");
 		tr.appendChild(tdh);
 	}
 	t.appendChild(tr)
-	for(var r=0;r<row;r++){
+	for(var r=0;r<r_cnt;r++){
 		tr = document.createElement("tr");
 		tr.setAttribute("class", "wapRow");
 		var trh = document.createElement("th"); //row headers
 		trh.innerHTML = r;
 		trh.setAttribute("class", "wapRowHeader");
 		tr.appendChild(trh);
-		for(var c=0;c<col;c++){
+		for(var c=0;c<c_cnt;c++){
 			var td = document.createElement("td");
 			var cellData = rows[r].cells[c];
 			td.innerHTML = cellData.inputText;
@@ -98,6 +87,54 @@ createCellElem = function(cell){
 	return td;
 }
 
+initWapCell = function(r,c) {
+
+	let cell = {};
+	
+	cell.r = r;
+	cell.c = c;
+	cell.isSelected = false;
+	cell.inputText = ""+rand();
+	if(cell.r==0 && cell.c==0){
+		cell.inputText = "=avg(b0,c0)"
+	}
+	cell.elem = createCellElem(cell);
+
+	cell.getInput=function(){
+		return cell.inputText;
+	}
+
+	cell.getOutput= function(){
+		return cell.elem.innerHTML;
+	}
+
+	cell.setInput= function(text){
+		cell.inputText = text;
+	};
+
+	cell.setOutput= function(text){
+		cell.elem.innerHTML = text;
+	};
+
+	cell.toggleSelection= function(){
+		if(cell.isSelected){
+			cell.isSelected = false;
+			cell.elem.classList.remove("selected");
+		}
+		else{
+			cell.isSelected = true;
+			cell.elem.classList.add("selected");
+		}
+	};
+
+	cell.delClick= function(){
+		cell.setInput("");
+		cell.setOutput("");
+	}
+
+	return cell;
+}
+
 initWapTable = function(r,c) {
 	var t = {};
 	t.r_cnt= r;
@@ -107,20 +144,11 @@ initWapTable = function(r,c) {
 	t.c_curr= 0;
 
 	t.rows= [];
-	for(let r=0;r<t.r_cnt;r++){
+	for(let r=0;r<t.r_cnt;r++){ //create cells
 		let row = {};
 		row.cells=[];
 		for(let c=0;c<t.c_cnt;c++){
-			let cell = {};
-			cell.r = r;
-			cell.c = c;
-			cell.isSelected = false;
-			cell.inputText = ""+rand();
-			if(cell.r==0 && cell.c==0){
-				cell.inputText = "=avg(b0,c0)"
-			}
-			cell.elem = createCellElem(cell);
-			row.cells.push(cell);
+			row.cells.push(initWapCell(r,c));
 		}
 		t.rows.push(row);
 	}
@@ -158,14 +186,6 @@ initWapTable = function(r,c) {
 		return t.getCell(t.r_curr,t.c_curr);
 	};
 
-	t.getCellInput= function(r,c){
-		return t.getCell(r,c).inputText;
-	}
-
-	t.getCellOutput= function(r,c){
-		return t.getCell(r,c).elem.innerHTML;
-	}
-
 	t.getCurrentCellOutput= function(){
 		var curr_cell = t.getCurrentCell();
 		return curr_cell.elem.innerHTML;
@@ -176,27 +196,12 @@ initWapTable = function(r,c) {
 	};
 
 	t.setCurrentCell= function(r,c){
-		var curr_cell = t.getCurrentCell();
+		let curr_cell = t.getCurrentCell();
+		let tgt_cell = t.getCell(r,c);
 		curr_cell.elem.classList.remove("currentCell");
-		tgt_cell = t.getCell(r,c);
 		tgt_cell.elem.classList.add("currentCell");
 		t.r_curr = r;
 		t.c_curr = c;
-	};
-
-	t.setCellInput= function(r,c,text){
-		let cell = t.getCell(r,c);
-		cell.inputText = text;
-	};
-
-	t.setCurrentCellInput= function(text){
-		var curr_cell = t.getCurrentCell();
-		curr_cell.inputText = text;
-	};
-
-	t.setCellOutput= function(r,c,text){
-		var cell = t.getCell(r,c);
-		cell.elem.innerHTML = text;
 	};
 
 	t.setCurrentCellOutput= function(text){
@@ -204,17 +209,11 @@ initWapTable = function(r,c) {
 		curr_cell.elem.innerHTML = text;
 	};
 
-	t.toggleSelection= function(r,c){
-		var cell = t.getCell(r,c);
-		if(cell.isSelected){
-			cell.isSelected = false;
-			cell.elem.classList.remove("selected");
-		}
-		else{
-			cell.isSelected = true;
-			cell.elem.classList.add("selected");
-		}
-	}
+	t.setCurrentCellInput= function(text){
+		var curr_cell = t.getCurrentCell();
+		curr_cell.inputText = text;
+	};
+
 
 	t.delSelection= function(){
 		var curr_cell = t.getCurrentCell();
@@ -222,9 +221,8 @@ initWapTable = function(r,c) {
 			for(var c=0;c<t.c_cnt;c++){
 				var cell = t.getCell(r,c);
 				if(cell.isSelected){
-					t.toggleSelection(cell.r,cell.c)
-					t.setCellInput(r,c,"");
-					t.setCellOutput(r,c,"");
+					curr_cell.toggleSelection();
+					curr_cell.delClick();
 				}
 			}
 		}
@@ -238,9 +236,9 @@ initWapTable = function(r,c) {
 			isModified=false;
 			for(var r=0;r<t.r_cnt;r++){
 				for(var c=0;c<t.c_cnt;c++){
-					val_old = t.getCellOutput(r,c);
+					val_old = t.getCell(r,c).getOutput();
 					t.evaluateCell(r,c);
-					val_new = t.getCellOutput(r,c);
+					val_new = t.getCell(r,c).getOutput();
 					if(val_old!=val_new){
 						isModified=true;
 					}
@@ -251,10 +249,10 @@ initWapTable = function(r,c) {
 		}
 	}
 
-	t.evaluateCell= function(r,c,val){
-		var val = t.getCellInput(r,c);
+	t.evaluateCell= function(r,c){
+		let val = t.getCell(r,c).getInput();
 		if(val.charAt(0)!='='){
-			t.setCellOutput(r,c,val);
+			t.getCell(r,c).setOutput(val);
 			return;
 		}
 
@@ -271,14 +269,9 @@ initWapTable = function(r,c) {
 		var formula_regex = new RegExp("^="+re+"$","g")
 		let isValidExpr = formula_regex.test(val);
 		if (!isValidExpr){
-			t.setCellOutput(r,c,"SYNTAX_ERR");
+			t.getCell(r,c).setOutput("SYNTAX_ERR");
 			return;
 		}
-
-		// var re_test = new RegExp("sum\\(1,2\\)","g")
-		// var str = "sum(1,2)+6";
-		// console.log(re_test.test(str)+"<<<<<<<<<<<<<<<<<<<<<<<<<<<<");
-		// return;
 
 		var cellPtr_regex = new RegExp(re_cellPtr,"g")
 		var match = null;
@@ -289,7 +282,7 @@ initWapTable = function(r,c) {
 			let m_colDesc = match[0].charAt(0);
 			let m_r = parseInt(m_rowDesc);
 			let m_c = parseInt(m_colDesc.charCodeAt(0)) - 97;
-			let m_cellVal = t.getCellOutput(m_r,m_c);
+			let m_cellVal = t.getCell(m_r,m_c).getOutput();
 			deref = deref.replace(new RegExp(match[0],"g"),m_cellVal);
 		}
 
@@ -316,7 +309,7 @@ initWapTable = function(r,c) {
 		}
 
 		deref = deref.substring(1); //remove exp flag "="
-		t.setCellOutput(r,c,eval(deref));
+		t.getCell(r,c).setOutput(eval(deref));
 		
 	};
 
@@ -337,14 +330,14 @@ initWapCalc = function(r,c){
 	
 	wc.t = initWapTable(r,c);
 
-	wc.cc = createCellCont();
+	wc.ci = createCellInputElem();
 
-	wc.elem.appendChild(wc.cc.elem);
+	wc.elem.appendChild(wc.ci.elem);
 	wc.elem.appendChild(wc.t.elem);
 
 	wc.keyDown= function(keyCode){
 		if(wc.t.keyDown(keyCode)){
-			wc.cc.setInputText(wc.t.getCurrentCellInput());
+			wc.ci.setInputText(wc.t.getCurrentCellInput());
 			return true;
 		}
 
@@ -369,7 +362,7 @@ initWapCalc = function(r,c){
 		if(target.classList.contains("wapCell")){
 			var cell = target;
 			wc.cellClick(cell);
-			wc.cc.c_text.focus();
+			wc.ci.c_text.focus();
 		}
 		return true;
 	});
@@ -378,24 +371,24 @@ initWapCalc = function(r,c){
 		var r=parseInt(cellElem.getAttribute("data-row"));
 		var c=parseInt(cellElem.getAttribute("data-col"));
 		wc.t.setCurrentCell(r,c);
-		wc.cc.setInputText(wc.t.getCurrentCellInput());
+		wc.ci.setInputText(wc.t.getCurrentCellInput());
 	}
 
-	wc.cc.del_btn.addEventListener("click",function(e) {
+	wc.ci.del_btn.addEventListener("click",function(e) {
 		if(wc.t.getCurrentCell().isSelected){
-			wc.cc.setInputText("");
+			wc.ci.setInputText("");
 		}
 		wc.t.delSelection();
-		wc.cc.del_btn.blur();
+		wc.ci.del_btn.blur();
 	});
 
-	wc.cc.c_text.addEventListener("input",function (e) {
-		wc.t.setCurrentCellOutput(wc.cc.getInputText());
+	wc.ci.c_text.addEventListener("input",function (e) {
+		wc.t.setCurrentCellOutput(wc.ci.getInputText());
 	});
 
 	wc.init= function(){
 		wc.t.setCurrentCell(0,0);
-		wc.cc.setInputText(wc.t.getCurrentCellOutput());
+		wc.ci.setInputText(wc.t.getCurrentCellOutput());
 	};
 	
 	wc.init();
@@ -406,44 +399,44 @@ initWapCalc = function(r,c){
 // GLOBAL (document) HANDELRS ***************************
 const KEYc_D=68,KEYc_SPACE=32,KEYc_ENTER=13,KEYc_ESC=27, KEYc_LEFT=37, KEYc_UP=38, KEYc_RIGHT=39, KEYc_DOWN=40;
 document.onkeydown = function(e){
-	if (activePageElem==null){ return true;} //not a keydown for our calc
+	let ape = activePageElem;
+	if (ape==null){ return true;} //not a keydown for our calc
 	
-	if (activePageElem.cc.c_text==document.activeElement) { 
+	if (ape.ci.c_text==document.activeElement) { 
 		if(e.keyCode==KEYc_ESC){
-			activePageElem.cc.c_text.blur();
-			activePageElem.cc.setInputText(activePageElem.t.getCurrentCellInput());
+			ape.ci.c_text.blur();
+			ape.ci.setInputText(ape.t.getCurrentCellInput());
 		}
 		else if(e.keyCode==KEYc_ENTER){
-			activePageElem.cc.c_text.blur();
-			let curr_cell = activePageElem.t.getCurrentCell();
-			let newInput = activePageElem.cc.getInputText();
-			//if (!(newInput == activePageElem.t.getCurrentCellInput())) {
-				activePageElem.t.setCurrentCellInput(newInput);
-				activePageElem.t.evaluateCell(curr_cell.r,curr_cell.c);
-				//activePageElem.t.setCurrentCellOutput(newInput);
-				activePageElem.t.refresh();
+			ape.ci.c_text.blur();
+			let curr_cell = ape.t.getCurrentCell();
+			let newInput = ape.ci.getInputText();
+			//if (!(newInput == ape.t.getCurrentCellInput())) {
+				ape.t.setCurrentCellInput(newInput);
+				ape.t.evaluateCell(curr_cell.r,curr_cell.c);
+				//ape.t.setCurrentCellOutput(newInput);
+				ape.t.refresh();
 			//}
 		}
 		return true;
 	}
 
 	if(e.keyCode==KEYc_D){
-		activePageElem.cc.del_btn.click();
+		ape.ci.del_btn.click();
 	}
 
 	if(e.keyCode==KEYc_SPACE){
-		let curr_cell = activePageElem.t.getCurrentCell();
-		activePageElem.t.toggleSelection(curr_cell.r,curr_cell.c);
+		ape.t.getCurrentCell().toggleSelection();
 		return false;
 	}
 
 	if(e.keyCode==KEYc_ENTER){
-		activePageElem.cc.c_text.focus();
+		ape.ci.c_text.focus();
 		return false;
 	}
 
 	if(e.keyCode==KEYc_LEFT || e.keyCode==KEYc_UP || e.keyCode==KEYc_RIGHT || e.keyCode==KEYc_DOWN){
-		activePageElem.keyDown(e.keyCode);
+		ape.keyDown(e.keyCode);
 		return false;
 	}
 	
