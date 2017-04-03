@@ -323,6 +323,21 @@ createCalcElem = function(id){
 	return c;
 }
 
+createHelpElem= function(){
+	var e = document.createElement("div");
+	e.classList.add("help");
+
+	let helpText= "ARROWS navigate"
+	helpText+= "<br/>ENTER enter edit mode / leave edit mode && confirm changes";
+	helpText+= "<br/>ESC leave edit mode && revert changes";
+	helpText+= "<br/>SPACE select/deselect current cell";
+	helpText+= "<br/>CLICK change current / DBL CLICK change current && enter edit mode";
+	e.innerHTML= helpText
+	
+
+	return e;
+}
+
 initWapCalc = function(r,c){
 	var wc = {}
 	wc.e_id = genId();
@@ -334,6 +349,7 @@ initWapCalc = function(r,c){
 
 	wc.elem.appendChild(wc.ci.elem);
 	wc.elem.appendChild(wc.t.elem);
+	wc.elem.appendChild(createHelpElem());
 
 	wc.keyDown= function(keyCode){
 		if(wc.t.keyDown(keyCode)){
@@ -368,6 +384,10 @@ initWapCalc = function(r,c){
 	});
 
 	wc.cellClick= function(cellElem){
+
+		let curr_cell = activePageElem.t.getCurrentCell();
+		activePageElem.t.evaluateCell(curr_cell.r,curr_cell.c);
+
 		var r=parseInt(cellElem.getAttribute("data-row"));
 		var c=parseInt(cellElem.getAttribute("data-col"));
 		wc.t.setCurrentCell(r,c);
@@ -406,6 +426,8 @@ document.onkeydown = function(e){
 		if(e.keyCode==KEYc_ESC){
 			ape.ci.c_text.blur();
 			ape.ci.setInputText(ape.t.getCurrentCellInput());
+			let curr_cell = ape.t.getCurrentCell();
+			ape.t.evaluateCell(curr_cell.r,curr_cell.c);
 		}
 		else if(e.keyCode==KEYc_ENTER){
 			ape.ci.c_text.blur();
