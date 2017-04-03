@@ -216,13 +216,12 @@ initWapTable = function(r,c) {
 
 
 	t.delSelection= function(){
-		var curr_cell = t.getCurrentCell();
 		for(var r=0;r<t.r_cnt;r++){
 			for(var c=0;c<t.c_cnt;c++){
 				var cell = t.getCell(r,c);
 				if(cell.isSelected){
-					curr_cell.toggleSelection();
-					curr_cell.delClick();
+					cell.toggleSelection();
+					cell.delClick();
 				}
 			}
 		}
