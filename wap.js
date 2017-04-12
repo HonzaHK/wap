@@ -96,7 +96,10 @@ initWapCell = function(r,c) {
 	cell.isSelected = false;
 	cell.inputText = ""+rand();
 	if(cell.r==0 && cell.c==0){
-		cell.inputText = "=avg(b0,c0)"
+		cell.inputText = "=avg(b0,c0)";
+	}
+	else if(cell.r==0 && cell.c==1){
+		cell.inputText = "=sum(c0,c1,c2)";
 	}
 	cell.elem = createCellElem(cell);
 
@@ -275,14 +278,31 @@ initWapTable = function(r,c) {
 		var cellPtr_regex = new RegExp(re_cellPtr,"g")
 		var match = null;
 		var deref = val;
-		while((match = cellPtr_regex.exec(val))!=null){
+		while((match = cellPtr_regex.exec(val))!=null){ //dereference all cells
 			let m_idx = match.index;
 			let m_rowDesc = match[0].charAt(1);
 			let m_colDesc = match[0].charAt(0);
 			let m_r = parseInt(m_rowDesc);
 			let m_c = parseInt(m_colDesc.charCodeAt(0)) - 97;
+			if(m_r>=t.r_cnt || m_c>=t.c_cnt){ //reference to a cell out of index
+				t.getCell(r,c).setOutput("SEMAN_ERR");
+				return;
+			}
 			let m_cellVal = t.getCell(m_r,m_c).getOutput();
 			deref = deref.replace(new RegExp(match[0],"g"),m_cellVal);
+		}
+
+		var re_deref_sum = "sum\\("+re_num+"(,"+re_num+")*"+"\\)";
+		var re_deref_avg = "avg\\("+re_num+"(,"+re_num+")*"+"\\)";
+
+		var re_deref_base = "("+re_num+"|"+re_deref_sum+"|"+re_deref_avg+")";
+
+		var re_deref = re_deref_base+"("+"[\\+\\-\\*\\/]"+re_deref_base+")*";
+		var deref_formula_regex = new RegExp("^="+re_deref+"$","g")
+		isValidExpr = deref_formula_regex.test(deref); //check with dereferenced values
+		if (!isValidExpr){
+			t.getCell(r,c).setOutput("SEMAN_ERR");
+			return;
 		}
 
 		var sum_regex = new RegExp(re_sum,"g");
@@ -331,6 +351,7 @@ createHelpElem= function(){
 	helpText+= "<br/>ESC leave edit mode && revert changes";
 	helpText+= "<br/>SPACE select/deselect current cell";
 	helpText+= "<br/>CLICK change current / DBL CLICK change current && enter edit mode";
+	helpText+= "<br/>DEL delete selected cells' content";
 	e.innerHTML= helpText
 	
 
@@ -484,11 +505,19 @@ var activePageElem = null;
 
 
 // MAIN *************************************************
-document.addEventListener('DOMContentLoaded', function () {
-	var container = document.getElementById("container");
-	let wc = initWapCalc(5,3);
-	container.appendChild(wc.elem);
-	setActivePageElem(wc)
+
+insertTable = function(r,c,targetDiv){
+	if(r>9 || c>9){
+		alert("max row count == max col count == 9")
+	}
+	var tgtdiv = document.getElementById(""+targetDiv);
+	if(tgtdiv==null){
+		alert("target div does not exist");
+	}
+
+	let wc = initWapCalc(r,c);
+	tgtdiv.appendChild(wc.elem);
+	setActivePageElem(wc);
 	wc.t.refresh();
-});
+}
 // ******************************************************
