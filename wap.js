@@ -99,7 +99,7 @@ initWapCell = function(r,c) {
 		cell.inputText = "=avg(b0,c0)";
 	}
 	else if(cell.r==0 && cell.c==1){
-		cell.inputText = "=sum(c0,c1,c2)";
+		cell.inputText = "=sum(c1,c2)+2";
 	}
 	cell.elem = createCellElem(cell);
 
@@ -352,6 +352,7 @@ createHelpElem= function(){
 	helpText+= "<br/>SPACE select/deselect current cell";
 	helpText+= "<br/>CLICK change current / DBL CLICK change current && enter edit mode";
 	helpText+= "<br/>DEL delete selected cells' content";
+	helpText+= "<br/>cell input beginning with '=' will be treated as a formula and evaluated";
 	e.innerHTML= helpText
 	
 
