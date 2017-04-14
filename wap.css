@@ -1,42 +1,3 @@
-html, body, div, span, applet, object, iframe,
-h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-a, abbr, acronym, address, big, cite, code,
-del, dfn, em, img, ins, kbd, q, s, samp,
-small, strike, strong, sub, sup, tt, var,
-b, u, i, center,
-dl, dt, dd, ol, ul, li,
-fieldset, form, label, legend,
-table, caption, tbody, tfoot, thead, tr, th, td,
-article, aside, canvas, details, embed, 
-figure, figcaption, footer, header, hgroup, 
-menu, nav, output, ruby, section, summary,
-time, mark, audio, video {
-	margin: 0;
-	padding: 0;
-	border: 0;
-	font-size: 100%;
-	font: inherit;
-	vertical-align: baseline;
-}
-/* HTML5 display-role reset for older browsers */
-article, aside, details, figcaption, figure, 
-footer, header, hgroup, menu, nav, section {
-	display: block;
-}
-body {
-	line-height: 1;
-}
-ol, ul {
-	list-style: none;
-}
-blockquote, q {
-	quotes: none;
-}
-blockquote:before, blockquote:after,
-q:before, q:after {
-	content: '';
-	content: none;
-}
 table {
 	/*border-collapse: collapse;*/
 	border-spacing: 0;
@@ -46,52 +7,52 @@ table, th, td {
     border: 1px solid gray;
 }
 
-#container {
-	padding: 100px;
+#container { /*for demo purpose only*/
+	padding: 20px;
 }
 
-.wapTable {
-	float:right;
-}
-
-.wapCalc {
+.wapCalc { /*entire top-level element (table+input+button+help)*/
 	padding:20px;
 	margin: 10px;
 	border: 1px dotted black;
 	float:right;
 }
 
-.activeWc {
+.wapTable { /*table*/
+	float:right;
+}
+
+.activeWc { /*active top-level element*/
 	border: 2px solid black;
 	background-color: #e6e6ff
 }
 
-.wapRowHeader, .wapColHeader {
+.wapRowHeader, .wapColHeader { /*table headers*/
 	text-align:center; 
 	vertical-align:middle;
 	
 }
 
-.wapRow {
+.wapRow { /*table row*/
 	height: 50px;
 }
 
-.wapCell {
+.wapCell { /*table cell*/
 	width: 500px;
 	background-color: white;
 	text-align:center; 
 	vertical-align:middle;
 }
 
-.selected{
+.selected{ /*table's selected cells*/
 	background-color: #ffcccc;
 }
 
-.currentCell {
+.currentCell { /*table's current cell*/
 	border: 3px solid purple;
 }
 
-.ciInput {
+.ciInput { /*cell input style*/
 	margin-bottom: 10px;
 	height: 30px;
 	width: 60%;
@@ -100,7 +61,7 @@ table, th, td {
 	padding-left: 10px;
 }
 
-.delBtn {
+.delBtn { /*delete button style*/
 	width: 20%;
 	height: 33px;
 	background-color: white;

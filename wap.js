@@ -4,7 +4,7 @@ function rand(){
 	return Math.floor(Math.random() * 10) + 1 ; 
 }
 
-function genId(){
+function genId(){ //unique-id generator
 	var length = 5;
     var text = "";
     var possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
@@ -16,7 +16,7 @@ function genId(){
 }
 
 createCellInputElem = function(){
-
+//input field for current cell
 	var ci = {};
 
 	ci.c_text = document.createElement("input");
@@ -506,7 +506,6 @@ var activePageElem = null;
 
 
 // MAIN *************************************************
-
 insertTable = function(r,c,targetDiv){
 	if(r>9 || c>9){
 		alert("max row count == max col count == 9")
